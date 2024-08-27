@@ -23,6 +23,10 @@ Some use cases:
 * **Composing HTML elements with shaders.** “CSS shaders” precede WebGL. The ability to use shader effects with real HTML.
 * **Allow HTML rendering in 3D Context.** To be able to have interfaces and full accessible content in 3D.
 
+Demo:
+
+https://github.com/user-attachments/assets/a99bb40f-0b9f-4773-a0a8-d41fec575705
+
 
 ## Proposal
 
