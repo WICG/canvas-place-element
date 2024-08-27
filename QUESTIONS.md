@@ -37,5 +37,6 @@ This affects both hit-testing and behaviour of platform APIs (like IntersectionO
 11. Should we allow a place element to be a descendant of another place element? It will cause double draw of the descendant and also make it harder to reason about the element’s onscreen position.
 12. Placed elements must be stacking contexts. Do we need any other restriction?
 13. Should we force blockifying canvas children?
+14. place element vs draw element for 2d canvas
 
 
