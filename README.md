@@ -158,11 +158,26 @@ placeElement requires the browser to recompose the canvas buffer each time the e
 
 The browser could optimize by squashing sets of commands into buffers at placeElement boundaries whenever possible (each saveLayer would also need to split up?).
 
-### **Hit Testing Data structures do**
+### **Hit Testing Data structures**
 
 The canvas subtree is laid out based on the DOM/style applied to the elements. However, their contents are not painted based on the position or ordering of their boxes. It is instead defined by the canvas commands which render the element’s image into the canvas buffer.
 
 This affects both hit-testing and behaviour of platform APIs (like IntersectionObserver) which allows authors to observe the position of these elements. This is the data provided by CanvasDrawElements::updateElement API for drawElement mode and done automatically by the browser for placeElement mode.
+
+
+1. Should placed elements be direct children of the canvas or any descendant is ok? Might be harder to fake the element’s rendered position in the canvas if there are boxes between the canvas and the element in the tree.
+2. How are non-placed canvas children represented in the layout tree. We likely need to layout the entire subtree (especially if a placed element can be a descendant) and make everything not placed visibility: hidden so they are not painted and inert.
+3. Should we force containment (layout or paint) on canvas to ensure the children don’t affect the layout of the rest of the Document?
+4. Is it worth providing the invalidation rect (based on element bounds) or will authors always do full redraw?
+5. Should draw commands after placeElement block the interaction rect of elements (since they would occlude the element)? Should there be a context state to control this behavior?
+6. When painting the elements, which box should be painted? Should it include shadow? If so, how does the developer know what is the full rendered size?
+7. If developers want to align placeElements (either by baseline or box), how are they supposed to do it?
+8. What happens to placed inline elements?
+9. Clarify the timing for when the image is generated when using drawImage. Ideally it should be at the end of all script callbacks during [update the rendering](https://html.spec.whatwg.org/\#update-the-rendering) but unclear whether that’s possible for 3D.
+10. The author might draw a subset of the element. Should we add a “src rect” to updateElement.
+11. Should we allow a place element to be a descendant of another place element? It will cause double draw of the descendant and also make it harder to reason about the element’s onscreen position.
+12. Placed elements must be stacking contexts. Do we need any other restriction?
+13. Should we force blockifying canvas children?
 
 
 ## Q&A
