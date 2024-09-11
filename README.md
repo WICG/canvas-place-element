@@ -5,7 +5,7 @@ This proposal covers APIs to allow live HTML elements on Canvas 2D, WebGL and We
 
 ## Status
 
-Authors: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com),  Aaron Krajeski, Chris Harrelson
+Authors: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com), [Stephen Chenney](mailto:schenney@igalia.com), Aaron Krajeski, Chris Harrelson
 
 Champions: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com)
 
@@ -18,10 +18,13 @@ A fundamental capability missing from the web is the ability to complement Canva
 
 Some use cases:
 
-* **Styled, Layouted & Accessible Text in Canvas.** There’s a strong need for better text support on Canvas. This includes both visual features like multi-line styled text but also the possibility to support the same level of user interaction as the rest of the web (scrolling, interactions, accessibility, indexability, translate, find-in-page, IME input, spellcheck, autofill, etc).
-* **Interactive forms.** Access to live interactive forms, links, editable content with the same quality as the web. Close the app gap with Flash.
-* **Composing HTML elements with shaders.** “CSS shaders” precede WebGL. The ability to use shader effects with real HTML.
-* **Allow HTML rendering in 3D Context.** To be able to have interfaces and full accessible content in 3D.
+* **Styled, Laid Out Content in Canvas.** There’s a strong need for better text support on Canvas. Examples include chart components (legend, axes, etc.) and in-game menus. This includes not only visual features but also the possibility of supporting the same level of user interaction as the rest of the web (scrolling, interactions, accessibility, indexability, translate, find-in-page, IME input, spellcheck, autofill, etc).
+* **Accessibility Improvements.** There is currently no guarantee that the canvas fallback content currently used for accessibility always matches the rendered content, and such fallback content can be hard to generate. Accessibility information from HTML placed in the canvas would automatically match that content. Additional benefits include accurate tab navigation and better focus rings. These things currently require considerable author effort to implement with primitive text drawing in canvas.
+* **Interactive forms.** Access to live interactive forms, links, editable content with the same quality as the web. This will help to close the app gap with Flash.
+* **Composing HTML Elements with Shaders.** A limited set of CSS shaders, such as filter effects, are already available, but there is a desire to use general WebGL shaders with HTML.
+* **HTML Rendering in a 3D Context.** This enables interactions and fully accessible content in 3D.
+
+In summary, users should be able to read multi-line text in canvas that provides correct i18n, a11y and all other capabilities expected from web content.
 
 Demo:
 
@@ -36,9 +39,9 @@ For this explainer, we use the term “live element” to describe an HTML eleme
 
 ### **placeElement**
 
-placeElement is the high level “do the right thing” API.
+`placeElement` is the high level “do the right thing” API.
 
-```javascript
+```idl
 interface mixin CanvasPlaceElements {
   Element placeElement(Element el, double x, double y);
 }
@@ -46,23 +49,23 @@ interface mixin CanvasPlaceElements {
 CanvasRenderingContext2D includes CanvasPlaceElements;
 ```
 
-This element must be a direct child of the Canvas element. The children elements of Canvas don’t impact the overall document layout and, before placeElement, are considered fallback content and ignored on modern browsers. Once placeElement is called, the element becomes alive until the canvas is reset (either by ctx.reset() or canvas.width \= canvas.width) or until it’s not a child of the canvas anymore.
+This element must be a direct child of the Canvas element. The children elements of Canvas don’t impact the overall document layout and, before placeElement, are considered fallback content used to provide accessibility information on modern browsers. Once `placeElement` is called, the element becomes alive until the canvas is reset (either by `ctx.reset()` or `canvas.width \= canvas.width`) or until it’s not a child of the canvas anymore.
 
-The element is rendered at a particular position and takes the CTM (current transform matrix) of the canvas into consideration.
+The element is rendered at a particular position and takes the CTM (current transform matrix) of the canvas into consideration. From a document layout perspective, when `placeElement` is called on an element it becomes part of the document layout (although isolated from the rest of the document), and has CSS applied and executing script. The containing block and other layout context comes from the canvas element itself.
 
-The element gets repainted (together with the canvas) as needed. The call order of placeElement implicitly describes which canvas draw commands happen before (below) or after (above) the rendering of the element.
+The element gets repainted (together with the canvas) as needed. The call order of `placeElement` implicitly describes which canvas draw commands happen before (below) or after (above) the rendering of the element.
 
-placeElement() may taint the canvas. It returns the element placed or null if failed.
+`placeElement()` may taint the canvas. It returns the element placed or null if failed.
 
 It’s also worth noting that this never duplicates the element. If called twice on a single canvas, it simply “replaces” (repositions) the element to a new location \+ CTM and to a new position in the canvas stack.
 
 Usage example:
 
-```javascript
+```html
 <!doctype html>
 <html><body>
 <canvas id=c>
-  <div id=d>hello < a href = "https://example.com" > worldhello <a href="https://example.com">world</a>!</div>
+  <div id=d>hello <a href="https://example.com">world</a>!</div>
 </canvas>
 <script>
 const ctx = document.getElementById("c").getContext("2d");
@@ -76,9 +79,9 @@ This would add a text “hello [world](https://example.com)\!” to the canvas, 
 
 ### **drawElement**
 
-The second API is a broken down version of the previous one, that allows the same behavior as placeElement, but broken down in stages. It requires more work from developers to support live elements, but is also exposed to 3D contexts, which placeElement isn’t. This API is also useful for cases where interaction is not required, like drawing better text for images or for screenshotting the page.
+The second API is a limited and deconstructed version of `placeElement`, that allows the same behavior as `placeElement`, but broken down in stages. It requires more work from developers to support live elements, but is also exposed to 3D contexts, which `placeElement` isn’t. This API is also useful for cases where interaction is not required, like drawing better text for images or for screenshotting the page.
 
-```javascript
+```idl
 
 interface mixin CanvasDrawElements {
   undefined updateElement(Element el,
@@ -113,19 +116,19 @@ GPUCanvasContext includes CanvasDrawElements;
 
 ```
 
-When using the drawElement API, the user has to complete the loop to make the element alive in Javascript:
+When using the drawElement API, the author must complete the rendering loop in Javascript to make the element alive:
 
-* it needs to call the draw function (drawImage, texImage2D, GPUImageCopyExternalImageSource),
+* it needs to call the draw function (`drawImage`, `texImage2D`, `GPUImageCopyExternalImageSource`),
 * update the element transform (so the browser knows where the element ended up (in relationship to the canvas), and
 * respond to a new invalidation event (for redrawing or refocusing within the scene, as needed). In theory, the invalidation event is optional if the user is updating the element on RAF, but it could still be useful if the page wants to respond to a find-in-page event, for example.
 
-In theory, drawElement can be used to provide non-accessible text. We still enforce that the element (at drawing time) must be a child of its canvas, but the liveness of the element depends on developers doing the right thing. That said, the current status quo is that it’s impossible for developers to “do the right thing”, i.e., text in 3D contexts \- for example \- is currently always inaccessible. This API would allow developers to do the right thing.
+In theory, `drawElement` can be used to provide non-accessible text. We still enforce that the element (at drawing time) must be a child of its canvas, but the liveness of the element depends on developers doing the right thing. That said, the current status quo is that it’s impossible for developers to “do the right thing”, i.e., text in 3D contexts \- for example \- is currently always inaccessible. This API would allow developers to do the right thing.
 
-An already placedElement can be drawn, but cannot have its transform updated.
+An element already used in `placeElement` can be drawn, but cannot have its transform updated.
 
 Usage example:
 
-```javascript
+```html
 <!doctype html>
 <html><body>
 <canvas id=c>
