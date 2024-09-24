@@ -2,9 +2,7 @@
 
 ## Privacy-preserving rendering
 
-`placeElement` can taint the canvas2D as needed, so even cross-origin content could eventually be placed without privacy issues. For `drawElement`, there’s no tainting mechanism for WebGL/WebGPU but even if it existed, the existence of shaders makes it that all rendered content should be assumed to be readable by the page. This is why WebGL/WebGPU today disallows rendering cross-origin images.
-
-To support `drawElement` at all, we need to make sure that the rendering of the elements is done in a privacy-preserving way. Visited links may be changing soon to be domain-based. But other issues (like dictionary spelling) may need to be disabled. There is precedent for this in SVG-as-image `foreignObject` handling.
+WebGL/WebGPU requires all rendered content to be privacy preserving, meaning any content for either drawElement or placeElement must be privacy preserving for use in WebGL/WebGPU. See [Issue #5](https://github.com/WICG/canvas-place-element/issues/5).
 
 ## Complexity of rendering certain elements
 
