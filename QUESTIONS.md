@@ -6,7 +6,7 @@ WebGL/WebGPU requires all rendered content to be privacy preserving, meaning any
 
 ## Complexity of rendering certain elements
 
-It’s possible that some elements may not be renderable to a texture (2D or 3D). For those cases, we are ready to have an initial disallowed list of elements to simplify implementation by UAs. For those cases, `placeElement()` could return null to indicate this `placeElement` is not supported.
+It’s possible that some elements may not be renderable to a texture (2D or 3D). For those cases, we are ready to have an initial disallowed list of elements to simplify implementation by UAs. For those cases, `placeElement()` could return null to indicate this `placeElement` is not supported. [Issue #7](https://github.com/WICG/canvas-place-element/issues/7) was created to develop the disallow list.
 
 ## **Re-compositing for placeElement**
 
