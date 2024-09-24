@@ -8,7 +8,7 @@ WebGL/WebGPU requires all rendered content to be privacy preserving, meaning any
 
 It’s possible that some elements may not be renderable to a texture (2D or 3D). For those cases, we are ready to have an initial disallowed list of elements to simplify implementation by UAs. For those cases, `placeElement()` could return null to indicate this `placeElement` is not supported. [Issue #7](https://github.com/WICG/canvas-place-element/issues/7) was created to develop the disallow list.
 
-## **Re-compositing for placeElement**
+## Re-compositing for placeElement
 
 `placeElement` requires the browser to recompose the canvas buffer each time the element changes. This should be equivalent to rendering all commands executed on the canvas with the latest contents for each placed element. If implemented as such, this would be inefficient since the buffer of commands can grow unbounded.
 
@@ -16,9 +16,11 @@ The browser could optimize by squashing sets of commands into buffers at `placeE
 
 ## Hit Testing Data structures
 
-The canvas subtree is laid out based on the DOM/style applied to the elements. However, their contents are not painted based on the position or ordering of their boxes. It is instead defined by the canvas commands which render the element’s image into the canvas buffer.
+The canvas subtree is laid out based on the DOM/style applied to the elements giving geometric locations as if it was painted as a child of the canvas. However, the element is painted in the location given by placeElement, the transform stack, and so on.
 
 This affects both hit-testing and behaviour of platform APIs (like `IntersectionObserver`) which allows authors to observe the position of these elements. This is the data provided by `CanvasDrawElements::updateElement` API for drawElement mode and done automatically by the browser for `placeElement` mode.
+
+There are also issues with mouseDown and other similar events that should go to the topmost element (or bubbled). What happens when canvas content is drawn over the element? See [Issue #9](https://github.com/WICG/canvas-place-element/issues/9).
 
 ## Accessibility
 
