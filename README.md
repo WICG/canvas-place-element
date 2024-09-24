@@ -2,21 +2,19 @@
 
 This proposal covers APIs to allow live HTML elements on Canvas 2D, WebGL and WebGPU.
 
-
 ## Status
 
-Authors: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com), [Stephen Chenney](mailto:schenney@igalia.com), Aaron Krajeski, Chris Harrelson
+**Authors:** [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com), [Stephen Chenney](mailto:schenney@igalia.com), Aaron Krajeski, Chris Harrelson
 
-Champions: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com)
+**Champions:** [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com)
 
 This proposal is at Stage 0 of the [WHATWG Stages process](https://whatwg.org/stages).
-
 
 ## Motivation
 
 A fundamental capability missing from the web is the ability to complement Canvas with HTML elements. Adding this capability enables Canvas surfaces to benefit from all of the styling, layout and behaviors of HTML, including interactive elements and built-in accessibility.
 
-Some use cases:
+### Use cases
 
 * **Styled, Laid Out Content in Canvas.** There’s a strong need for better text support on Canvas. Examples include chart components (legend, axes, etc.) and in-game menus. This includes not only visual features but also the possibility of supporting the same level of user interaction as the rest of the web (scrolling, interactions, accessibility, indexability, translate, find-in-page, IME input, spellcheck, autofill, etc).
 * **Accessibility Improvements.** There is currently no guarantee that the canvas fallback content currently used for accessibility always matches the rendered content, and such fallback content can be hard to generate. Accessibility information from HTML placed in the canvas would automatically match that content. Additional benefits include accurate tab navigation and better focus rings. These things currently require considerable author effort to implement with primitive text drawing in canvas.
@@ -26,10 +24,9 @@ Some use cases:
 
 In summary, users should be able to read multi-line text in canvas that provides correct i18n, a11y and all other capabilities expected from web content.
 
-Demo:
+### Demo
 
 https://github.com/user-attachments/assets/a99bb40f-0b9f-4773-a0a8-d41fec575705
-
 
 ## Proposal
 
@@ -59,20 +56,22 @@ The element gets repainted (together with the canvas) as needed. The call order 
 
 It’s also worth noting that this never duplicates the element. If called twice on a single canvas, it simply “replaces” (repositions) the element to a new location \+ CTM and to a new position in the canvas stack.
 
-Usage example:
+### Usage example
 
 ```html
 <!doctype html>
-<html><body>
-<canvas id=c>
-  <div id=d>hello <a href="https://example.com">world</a>!</div>
-</canvas>
-<script>
-const ctx = document.getElementById("c").getContext("2d");
-ctx.rotate(Math.PI / 4);
-ctx.placeElement(document.getElementById("d"), 10, 10);
-</script>
-</body></html>
+<html>
+  <body>
+    <canvas id="c">
+      <div id="d">hello <a href="https://example.com">world</a>!</div>
+    </canvas>
+    <script>
+      const ctx = document.getElementById("c").getContext("2d");
+      ctx.rotate(Math.PI / 4);
+      ctx.placeElement(document.getElementById("d"), 10, 10);
+    </script>
+  </body>
+</html>
 ```
 
 This would add a text “hello [world](https://example.com)\!” to the canvas, with a clickable link and interactable text rotated by 45 degrees.
@@ -82,7 +81,6 @@ This would add a text “hello [world](https://example.com)\!” to the canvas, 
 The second API is a limited and deconstructed version of `placeElement`, that allows the same behavior as `placeElement`, but broken down in stages. It requires more work from developers to support live elements, but is also exposed to 3D contexts, which `placeElement` isn’t. This API is also useful for cases where interaction is not required, like drawing better text for images or for screenshotting the page.
 
 ```idl
-
 interface mixin CanvasDrawElements {
   undefined updateElement(Element el,
     optional DOMMatrixInit transform = {}, optional long zOrder);
@@ -113,7 +111,6 @@ WebGL2RenderingContext includes CanvasDrawElements;
 typedef (... or Element) GPUImageCopyExternalImageSource;
 
 GPUCanvasContext includes CanvasDrawElements;
-
 ```
 
 When using the drawElement API, the author must complete the rendering loop in Javascript to make the element alive:
@@ -130,18 +127,20 @@ Usage example:
 
 ```html
 <!doctype html>
-<html><body>
-<canvas id=c>
-  <div id=d>hello <a href="https://example.com">world</a>!</div>
-</canvas>
-<script>
-const ctx = document.getElementById("c").getContext("2d");
-const el = document.getElementById("d");
-ctx.rotate(Math.PI / 4);
-ctx.drawImage(el, 10, 10);
-ctx.updatedElement(el, ctx.getTransform());
-</script>
-</body></html>
+<html>
+  <body>
+    <canvas id="c">
+      <div id="d">hello <a href="https://example.com">world</a>!</div>
+    </canvas>
+    <script>
+      const ctx = document.getElementById("c").getContext("2d");
+      const el = document.getElementById("d");
+      ctx.rotate(Math.PI / 4);
+      ctx.drawImage(el, 10, 10);
+      ctx.updatedElement(el, ctx.getTransform());
+    </script>
+  </body>
+</html>
 ```
 
 This would render the text “hello [world](https://example.com)\!” to the canvas with an interactable text.
@@ -151,6 +150,4 @@ This would render the text “hello [world](https://example.com)\!” to the can
 * [Open Questions](./QUESTIONS.md)
 * [Implementation Details on Chromium](./IMPLEMENTATION.md)
 
-
 ## Q&A
-
