@@ -2,31 +2,28 @@
 
 This proposal covers APIs to allow live HTML elements on Canvas 2D, WebGL and WebGPU.
 
-
 ## Status
 
-Authors: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com),  Aaron Krajeski, Chris Harrelson
+**Authors:** [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com),  Aaron Krajeski, Chris Harrelson
 
-Champions: [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com)
+**Champions:** [Fernando Serboncini](mailto:fserb@google.com), [Khushal Sagar](mailto:khushalsagar@google.com)
 
 This proposal is at Stage 0 of the [WHATWG Stages process](https://whatwg.org/stages).
-
 
 ## Motivation
 
 A fundamental capability missing from the web is the ability to complement Canvas with HTML elements. Adding this capability enables Canvas surfaces to benefit from all of the styling, layout and behaviors of HTML, including interactive elements and built-in accessibility.
 
-Some use cases:
+### Use cases
 
 * **Styled, Layouted & Accessible Text in Canvas.** There’s a strong need for better text support on Canvas. This includes both visual features like multi-line styled text but also the possibility to support the same level of user interaction as the rest of the web (scrolling, interactions, accessibility, indexability, translate, find-in-page, IME input, spellcheck, autofill, etc).
 * **Interactive forms.** Access to live interactive forms, links, editable content with the same quality as the web. Close the app gap with Flash.
 * **Composing HTML elements with shaders.** “CSS shaders” precede WebGL. The ability to use shader effects with real HTML.
 * **Allow HTML rendering in 3D Context.** To be able to have interfaces and full accessible content in 3D.
 
-Demo:
+### Demo
 
 https://github.com/user-attachments/assets/a99bb40f-0b9f-4773-a0a8-d41fec575705
-
 
 ## Proposal
 
@@ -38,7 +35,7 @@ For this explainer, we use the term “live element” to describe an HTML eleme
 
 placeElement is the high level “do the right thing” API.
 
-```javascript
+```idl
 interface mixin CanvasPlaceElements {
   Element placeElement(Element el, double x, double y);
 }
@@ -56,20 +53,22 @@ placeElement() may taint the canvas. It returns the element placed or null if fa
 
 It’s also worth noting that this never duplicates the element. If called twice on a single canvas, it simply “replaces” (repositions) the element to a new location \+ CTM and to a new position in the canvas stack.
 
-Usage example:
+### Usage example
 
-```javascript
+```html
 <!doctype html>
-<html><body>
-<canvas id=c>
-  <div id=d>hello < a href = "https://example.com" > worldhello <a href="https://example.com">world</a>!</div>
-</canvas>
-<script>
-const ctx = document.getElementById("c").getContext("2d");
-ctx.rotate(Math.PI / 4);
-ctx.placeElement(document.getElementById("d"), 10, 10);
-</script>
-</body></html>
+<html>
+  <body>
+    <canvas id="c">
+      <div id="d">hello <a href="https://example.com">world</a>!</div>
+    </canvas>
+    <script>
+      const ctx = document.getElementById("c").getContext("2d");
+      ctx.rotate(Math.PI / 4);
+      ctx.placeElement(document.getElementById("d"), 10, 10);
+    </script>
+  </body>
+</html>
 ```
 
 This would add a text “hello [world](https://example.com)\!” to the canvas, with a clickable link and interactable text rotated by 45 degrees.
@@ -78,8 +77,7 @@ This would add a text “hello [world](https://example.com)\!” to the canvas, 
 
 The second API is a broken down version of the previous one, that allows the same behavior as placeElement, but broken down in stages. It requires more work from developers to support live elements, but is also exposed to 3D contexts, which placeElement isn’t. This API is also useful for cases where interaction is not required, like drawing better text for images or for screenshotting the page.
 
-```javascript
-
+```idl
 interface mixin CanvasDrawElements {
   undefined updateElement(Element el,
     optional DOMMatrixInit transform = {}, optional long zOrder);
@@ -110,7 +108,6 @@ WebGL2RenderingContext includes CanvasDrawElements;
 typedef (... or Element) GPUImageCopyExternalImageSource;
 
 GPUCanvasContext includes CanvasDrawElements;
-
 ```
 
 When using the drawElement API, the user has to complete the loop to make the element alive in Javascript:
@@ -121,24 +118,26 @@ When using the drawElement API, the user has to complete the loop to make the el
 
 In theory, drawElement can be used to provide non-accessible text. We still enforce that the element (at drawing time) must be a child of its canvas, but the liveness of the element depends on developers doing the right thing. That said, the current status quo is that it’s impossible for developers to “do the right thing”, i.e., text in 3D contexts \- for example \- is currently always inaccessible. This API would allow developers to do the right thing.
 
-An already placedElement can be drawn, but cannot have its transform updated.
+An already placed element can be drawn, but cannot have its transform updated.
 
 Usage example:
 
 ```javascript
 <!doctype html>
-<html><body>
-<canvas id=c>
-  <div id=d>hello <a href="https://example.com">world</a>!</div>
-</canvas>
-<script>
-const ctx = document.getElementById("c").getContext("2d");
-const el = document.getElementById("d");
-ctx.rotate(Math.PI / 4);
-ctx.drawImage(el, 10, 10);
-ctx.updatedElement(el, ctx.getTransform());
-</script>
-</body></html>
+<html>
+  <body>
+    <canvas id="c">
+      <div id="d">hello <a href="https://example.com">world</a>!</div>
+    </canvas>
+    <script>
+      const ctx = document.getElementById("c").getContext("2d");
+      const el = document.getElementById("d");
+      ctx.rotate(Math.PI / 4);
+      ctx.drawImage(el, 10, 10);
+      ctx.updatedElement(el, ctx.getTransform());
+    </script>
+  </body>
+</html>
 ```
 
 This would render the text “hello [world](https://example.com)\!” to the canvas with an interactable text.
@@ -148,6 +147,4 @@ This would render the text “hello [world](https://example.com)\!” to the can
 * [Open Questions](./QUESTIONS.md)
 * [Implementation Details on Chromium](./IMPLEMENTATION.md)
 
-
 ## Q&A
-
