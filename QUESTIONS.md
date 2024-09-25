@@ -30,13 +30,7 @@ just like all other canvas fallback content.
 
 If authors wish to use canvas fallback content as a "staging area"
 for content which may later be shown to sighted users using `placeElement()`,
-they should take care to hide that content from assistive technology.
-This can be done with any of the usual techniques
-for hiding content from assistive technology,
-such as using the `hidden`, `inert` or `aria-hidden` attributes,
-or applying a `display: none` or `display: hidden` style.
-
-Browsers cannot automate this because they do not know which fallback content is for non-`placeElement` portions of the canvas, and hence should remain accessible. Some mechanism could be defined for distinguishing the two different use cases for fallback content.
+they should take care to hide that content from assistive technology. See [Issue #11](https://github.com/WICG/canvas-place-element/issues/11) for discussion on how to address this problem.
 
 ## Other issues
 
